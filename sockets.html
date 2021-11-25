@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Let's play ping pong</title>
+</head>
+<body>
+<h1>Let's play ping pong</h1>
+<section id="game">
+</section>
+</body>
+<script type="application/javascript">
+
+    const submitWinnerButton = document.getElementById('winner-button')
+    const winnerInput = document.getElementById('winner')
+
+    if (window['WebSocket']) {
+        const conn = new WebSocket('ws://' + document.location.host + '/ws')
+
+        submitWinnerButton.onclick = event => {
+            conn.send(winnerInput.value)
+        }
+    }
+</script>
+</html>

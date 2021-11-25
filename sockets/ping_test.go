@@ -18,4 +18,15 @@ func TestGame(t *testing.T) {
 
 		assert.Equal(t, response.Code, http.StatusOK)
 	})
+
+	t.Run("GET /index returns 200", func(t *testing.T) {
+		server := NewPingServer()
+
+		request, _ := http.NewRequest(http.MethodGet, "/ping", nil)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, response.Code, http.StatusOK)
+	})
 }
