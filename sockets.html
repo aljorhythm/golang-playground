@@ -7,18 +7,39 @@
 <body>
 <h1>Let's play ping pong</h1>
 <section id="game">
+    <button id="ping-button">ping</button>
+    <h2>Status</h2>
+    <div id="status-container"></div>
+    <h2>Messages</h2>
+    <div id="messages-container"></div>
 </section>
 </body>
 <script type="application/javascript">
 
-    const submitWinnerButton = document.getElementById('winner-button')
-    const winnerInput = document.getElementById('winner')
+    const pingButton = document.getElementById('ping-button')
+    const statusContainer = document.getElementById('status-container')
+    const messagesContainer = document.getElementById('messages-container')
 
     if (window['WebSocket']) {
         const conn = new WebSocket('ws://' + document.location.host + '/ws')
 
-        submitWinnerButton.onclick = event => {
-            conn.send(winnerInput.value)
+        pingButton.onclick = event => {
+            console.log("send ping")
+            conn.send("ping!")
+        }
+
+        conn.onclose = evt => {
+            statusContainer.innerText = 'Connection closed'
+        }
+
+        conn.onmessage = evt => {
+            var textnode = document.createElement("div");
+            textnode.innerHTML = evt.data
+            messagesContainer.appendChild(textnode);
+        }
+
+        conn.onopen = function () {
+            conn.send("first ping!")
         }
     }
 </script>

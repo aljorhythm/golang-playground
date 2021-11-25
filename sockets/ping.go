@@ -42,6 +42,16 @@ func (p *PingServer) indexHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
+func writeWs(ws *websocket.Conn, p []byte) (n int, err error) {
+	err = ws.WriteMessage(websocket.TextMessage, p)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return len(p), nil
+}
+
 func (p *PingServer) webSocket(w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -52,8 +62,20 @@ func (p *PingServer) webSocket(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panicf("webSocket %#v", err)
 	}
-	_, msg, _ := conn.ReadMessage()
-	p.getStore().addMessage(string(msg))
+
+	for ;; {
+		_, msg, _ := conn.ReadMessage()
+
+		log.Printf("adding message %s", string(msg))
+		p.getStore().addMessage(string(msg))
+
+		log.Printf("writing message %s", string(msg))
+		_, err = writeWs(conn, msg)
+
+		if err != nil {
+			log.Panicf("webSocket write message %#v", err)
+		}
+	}
 }
 
 const jsonContentType = "application/json"
