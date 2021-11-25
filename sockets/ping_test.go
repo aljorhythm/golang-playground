@@ -52,8 +52,7 @@ func TestGame(t *testing.T) {
 
 		time.Sleep(10 * time.Millisecond)
 
-		store :=  pingServer.getStore()
-		assert.Equal(t, []string{message},store.messages)
+		store := pingServer.getStore()
+		assert.Equal(t, []string{message}, store.messages)
 	})
 }
-

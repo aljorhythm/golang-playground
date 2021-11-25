@@ -1,7 +1,10 @@
 microtest:
 	go test ./...
 
+format:
+	go fmt ./...
+
 run:
 	go run .
 
-all: microtest
+all: format microtest
