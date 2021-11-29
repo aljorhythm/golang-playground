@@ -64,7 +64,13 @@ func (p *PingServer) webSocket(w http.ResponseWriter, r *http.Request) {
 		log.Panicf("webSocket %#v", err)
 	}
 
-	for ;; {
+	isListening := true
+	conn.SetCloseHandler(func(code int, text string) error {
+		isListening = false
+		return nil
+	})
+
+	for ;isListening;  {
 		_, msg, _ := conn.ReadMessage()
 
 		log.Printf("adding message %s", string(msg))
