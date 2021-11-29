@@ -58,6 +58,7 @@ func (p *PingServer) webSocket(w http.ResponseWriter, r *http.Request) {
 		WriteBufferSize: 1024,
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
+	defer conn.Close()
 
 	if err != nil {
 		log.Panicf("webSocket %#v", err)
