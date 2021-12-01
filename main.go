@@ -40,19 +40,45 @@ func generateUploadFile(store storage.Storage) func(w http.ResponseWriter, r *ht
 func main() {
 	pingServer := sockets.NewPingServer()
 	httpServer := http.NewServeMux()
+	config := readConfig()
+	log.Printf("config %#v", config)
 
-
-	storage := storage.NewInmemoryStore()
+	storage := getStorage(config)
 
 	httpServer.HandleFunc("/upload", generateUploadFile(storage))
 	httpServer.HandleFunc("/open", generateDownloadFile(storage))
 
 	httpServer.Handle("/", pingServer.Handler)
 
-
 	log.Println("Running server")
 	if err := http.ListenAndServe(":8080", httpServer); err != nil {
 		log.Fatalf("%#v", err)
+	}
+}
+
+func getStorage(config Config) storage.Storage {
+	if config.DigitalOceanStore != nil {
+		log.Printf("loading digital ocean store")
+		digitalOceanConfig := config.DigitalOceanStore
+		bucketProps := storage.BucketProperties{
+			Name:     digitalOceanConfig.Space,
+			Location: "",
+		}
+
+		endpoint := digitalOceanConfig.Client.Endpoint
+		accessKey := digitalOceanConfig.Client.AccessKey
+		secKey := digitalOceanConfig.Client.SecretKey
+
+		store, err := storage.NewSpaceStore(context.Background(), endpoint, accessKey, secKey, bucketProps)
+
+		if err != nil {
+			log.Fatalf("cannot initialize #%v", err)
+			return nil
+		} else {
+			return store
+		}
+	} else {
+		return storage.NewInmemoryStore()
 	}
 }
 
