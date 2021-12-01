@@ -6,6 +6,11 @@ type InmemoryStore struct {
 	dataMap map[string][]byte
 }
 
+func (i *InmemoryStore) Delete(context context.Context, id string) error {
+	delete(i.dataMap, id)
+	return nil
+}
+
 func (i *InmemoryStore) Retrieve(ctx context.Context, id string) ([]byte, error) {
 	if data, ok := i.dataMap[id]; ok {
 		return data, nil

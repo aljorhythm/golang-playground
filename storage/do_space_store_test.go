@@ -35,7 +35,6 @@ func TestDigitalOceanSpaceStorage(t *testing.T) {
 
 	config := readTestConfig(t)
 
-	t.Logf("config %#v", config)
 	accessKey := config.AccessKey
 	secKey := config.SecretKey
 	endpoint := config.Endpoint
@@ -77,12 +76,30 @@ func TestDigitalOceanSpaceStorage(t *testing.T) {
 		}
 	})
 
-	t.Run("store file", func(t *testing.T) {
-		objectId := "object-1"
+	t.Run("store data", func(t *testing.T) {
+		objectId := "testdata/object-1"
 		data := []byte("abcde")
-		t.Run("store bytes", func(t *testing.T) {
+
+		t.Run("store object", func(t *testing.T) {
 			err := store.Store(ctx, objectId, data)
 			assert.NoError(t, err)
+
+			t.Run("retrieve object", func(t *testing.T) {
+				got, err := store.Retrieve(ctx, objectId)
+				assert.NoError(t, err)
+				assert.Equal(t, data, got)
+
+				t.Run("delete object", func(t *testing.T) {
+					err := store.Delete(ctx, objectId)
+					assert.NoError(t, err)
+					assert.Equal(t, data, got)
+
+					t.Run("retrieve object should fail", func(t *testing.T) {
+						_, err := store.Retrieve(ctx, objectId)
+						assert.Error(t, err)
+					})
+				})
+			})
 		})
 	})
 }
