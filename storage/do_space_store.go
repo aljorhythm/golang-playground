@@ -1,28 +1,21 @@
 package storage
 
 import (
-	"bytes"
 	"context"
-	"github.com/minio/minio-go/v7"
-	"log"
+	"errors"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 type SpaceStore struct {
-	*minio.Client
+	*s3.S3
 	BucketProperties
 }
 
 func (s *SpaceStore) Store(ctx context.Context, id string, data []byte) error {
-	reader := bytes.NewReader(data)
-	uploadInfo, err := s.Client.PutObject(ctx, s.Name, id, reader, int64(len(data)), minio.PutObjectOptions{})
-
-	if err != nil {
-		log.Panicf("bucket %s id %s upload info %#v error %s", s.Name, id, uploadInfo, err)
-		return err
-	}
-
-	log.Printf("bucket %s id %s updload info %#v", s.Name, id, uploadInfo)
-	return nil
+	return errors.New("unimplemented")
 }
 
 func (s *SpaceStore) Retrieve(ctx context.Context, id string) ([]byte, error) {
@@ -34,46 +27,28 @@ type BucketProperties struct {
 	Location string
 }
 
-func ListSomeObjects(ctx context.Context, endpoint string, minioOpts *minio.Options) ([]minio.ObjectInfo, error) {
-	client, err := minio.New(endpoint, minioOpts)
-
-	if err != nil {
-		log.Panicf("error connecting to space endpoint %s", endpoint)
-		return nil, ERROR_FAIL_TO_CONNECT_SPACE_STORE
-	}
-
-	c := client.ListObjects(ctx, "", minio.ListObjectsOptions{
-		WithVersions: false,
-		WithMetadata: false,
-		Prefix:       "",
-		Recursive:    false,
-		MaxKeys:      0,
-		StartAfter:   "",
-		UseV1:        false,
-	})
-
-	list := []minio.ObjectInfo{}
-
-	for item, done := <-c; done ; {
-	list := append(list, item)
-	   if len(list) > 10 {
-		   break
-	   }
-	}
-
-	if err != nil {
-		log.Panicf("error listing objects %#v", err)
-	} else {
-		log.Printf("objects %s", )
-	}
-	return list, err
+/**
+https://docs.digitalocean.com/products/spaces/resources/s3-sdk-examples/
+aws region is us-east-1 for digital ocean spaces
+ */
+func getRegion() *string {
+	return aws.String("us-east-1")
 }
 
-func NewSpaceStore(ctx context.Context, endpoint string, minioOpts *minio.Options, bucket BucketProperties) (Storage, error) {
-	client, err := minio.New(endpoint, minioOpts)
-	if err != nil {
-		return nil, ERROR_FAIL_TO_CONNECT_SPACE_STORE
+func NewSpaceStore(ctx context.Context, endpoint string, key string, secret string, bucket BucketProperties) (*SpaceStore, error) {
+	s3Config := &aws.Config{
+		Credentials: credentials.NewStaticCredentials(key, secret, ""),
+		Endpoint:    aws.String(endpoint),
+		Region:      getRegion(),
 	}
+
+	newSession, err := session.NewSession(s3Config)
+
+	if err != nil {
+		return nil, err
+	}
+
+	client := s3.New(newSession)
 
 	return &SpaceStore{
 		client,

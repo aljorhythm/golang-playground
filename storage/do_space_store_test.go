@@ -2,13 +2,12 @@ package storage
 
 import (
 	"context"
-	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 	"os"
 	"testing"
-
-	"github.com/minio/minio-go/v7"
 )
 
 func readTestConfig(t *testing.T) DigitalOceanSpaceConfig {
@@ -35,35 +34,50 @@ func TestDigitalOceanSpaceStorage(t *testing.T) {
 	ctx := context.Background()
 
 	config := readTestConfig(t)
+
+	t.Logf("config %#v", config)
 	accessKey := config.AccessKey
 	secKey := config.SecretKey
 	endpoint := config.Endpoint
 
-	t.Run("list buckets", func(t *testing.T) {
-		buckets, err := ListSomeObjects(ctx,
-			endpoint,
-			&minio.Options{
-				Creds:  credentials.NewStaticV4(accessKey, secKey, ""),
-				Secure: true,
-			})
+	bucketProps := BucketProperties{
+		Name:     "yumseng",
+		Location: "",
+	}
 
+	store, err := NewSpaceStore(ctx, endpoint, accessKey, secKey, bucketProps)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, store)
+
+	t.Run("list spaces", func(t *testing.T) {
+		input := &s3.ListObjectsInput{
+			Bucket: aws.String(bucketProps.Name),
+		}
+
+		objects, err := store.ListObjects(input)
 		assert.NoError(t, err)
-		t.Logf("buckets %#v", buckets)
+
+		t.Logf("length objects %d", len(objects.Contents))
+		assert.NotZero(t, len(objects.Contents))
+
+		for _, obj := range objects.Contents {
+			t.Log(aws.StringValue(obj.Key))
+		}
 	})
 
-	t.Run("SpaceStore", func(t *testing.T) {
-		bucketProps := BucketProperties{
-			Name:     "yumseng",
-			Location: "us-east-1",
-		}
-		store, err := NewSpaceStore(ctx, endpoint, &minio.Options{
-			Creds:  credentials.NewStaticV4(accessKey, secKey, ""),
-			Secure: true,
-		}, bucketProps)
-
+	t.Run("list buckets", func(t *testing.T) {
+		spaces, err := store.ListBuckets(nil)
 		assert.NoError(t, err)
-		assert.NotNil(t, store)
 
+		t.Logf("buckets size %d", len(spaces.Buckets))
+		assert.NotZero(t, len(spaces.Buckets))
+		for _, b := range spaces.Buckets {
+			t.Logf("bucket %s", (aws.StringValue(b.Name)))
+		}
+	})
+
+	t.Run("store file", func(t *testing.T) {
 		objectId := "object-1"
 		data := []byte("abcde")
 		t.Run("store bytes", func(t *testing.T) {

@@ -3,6 +3,7 @@ module github.com/aljorhythm/golang-playground
 go 1.16
 
 require (
+	github.com/aws/aws-sdk-go v1.42.16 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/minio/minio-go/v7 v7.0.16
