@@ -2,16 +2,16 @@ package storage
 
 import "context"
 
-type InmemoryStore struct {
+type inmemoryStore struct {
 	dataMap map[string][]byte
 }
 
-func (i *InmemoryStore) Delete(context context.Context, id string) error {
+func (i *inmemoryStore) Delete(context context.Context, id string) error {
 	delete(i.dataMap, id)
 	return nil
 }
 
-func (i *InmemoryStore) Retrieve(ctx context.Context, id string) ([]byte, error) {
+func (i *inmemoryStore) Retrieve(ctx context.Context, id string) ([]byte, error) {
 	if data, ok := i.dataMap[id]; ok {
 		return data, nil
 	} else {
@@ -19,13 +19,13 @@ func (i *InmemoryStore) Retrieve(ctx context.Context, id string) ([]byte, error)
 	}
 }
 
-func (i *InmemoryStore) Store(ctx context.Context, id string, bytes []byte) error {
+func (i *inmemoryStore) Store(ctx context.Context, id string, bytes []byte) error {
 	i.dataMap[id] = bytes
 	return nil
 }
 
 func NewInmemoryStore() Storage {
-	return &InmemoryStore{
+	return &inmemoryStore{
 		map[string][]byte{},
 	}
 }
